@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koby Caller</title>
+    <style>
+        :root {
+            --bg-primary: #0b0b0c;
+            --bg-card: rgba(20, 20, 22, 0.85);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --accent-orange: #f39c12;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --glass: rgba(255, 255, 255, 0.05);
+            --radius: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(30, 30, 35, 0.7) 0%, transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(40, 40, 45, 0.5) 0%, transparent 25%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            display: none; /* Hidden until setup */
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius);
+            padding: 32px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--glass);
+            text-align: center;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        .avatar-container {
+            margin: 0 auto 24px;
+            width: 160px;
+            height: 160px;
+            position: relative;
+        }
+
+        @media (max-width: 480px) {
+            .avatar-container {
+                width: 120px;
+                height: 120px;
+            }
+        }
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            background: linear-gradient(135deg, #3a3a40, #25252a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 60px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1),
+                        inset 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .call-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent-green);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 16px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 16px rgba(46, 204, 113, 0.3);
+        }
+
+        .call-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+        }
+
+        .call-button:active {
+            transform: scale(0.98);
+        }
+
+        .call-button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .call-button.pulse:not(:disabled) {
+            animation: pulse 2s infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .call-button.pulse:not(:disabled) {
+                animation: none;
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 14px rgba(46, 204, 113, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+            }
+        }
+
+        .status {
+            margin: 16px 0;
+            min-height: 24px;
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .timer {
+            font-variant-numeric: tabular-nums;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .transcript-container {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .transcript {
+            white-space: pre-wrap;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            max-width: 85%;
+        }
+
+        .message.user {
+            background: rgba(46, 204, 113, 0.15);
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant {
+            background: rgba(52, 152, 219, 0.15);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .fallback-input {
+            display: none;
+            width: 100%;
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .fallback-input:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius);
+            padding: 32px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--glass);
+        }
+
+        .modal h2 {
+            margin-bottom: 16px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .modal p {
+            margin-bottom: 24px;
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-orange);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--accent-orange);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #e67e22;
+        }
+
+        .btn-primary:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Modal for API Key Setup -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+            <h2 id="modal-title">Setup Koby Caller</h2>
+            <p>Enter your Secret key to start using Koby Caller.</p>
+            <div class="input-group">
+                <label for="api-key">Secret Key</label>
+                <input type="password" id="api-key" placeholder="Enter your Secret key" autocomplete="off" />
+            </div>
+            <button id="start-btn" class="btn btn-primary" disabled>Start Koby Caller</button>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="container">
+        <div class="card">
+            <h1 class="title">Call Koby</h1>
+            
+            <div class="avatar-container">
+                <div class="avatar" id="avatar">K</div>
+            </div>
+            
+            <button id="call-btn" class="call-button pulse" aria-label="Call Koby">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20.487 17.14L16.422 13.756C16.0524 13.4503 15.5672 13.3355 15.1023 13.4442C14.6374 13.5528 14.2457 13.8721 14.043 14.312L13.419 15.776C11.7842 15.1892 10.1489 14.0195 8.644 12.516C7.13906 11.0125 5.96852 9.37661 5.38 7.742L6.844 7.118C7.28405 6.91516 7.60351 6.52348 7.71226 6.05859C7.821 5.5937 7.70642 5.1084 7.401 4.738L3.86 0.601998C3.52592 0.197166 3.01635 -0.00810925 2.495 0.000398156C1.978 0.00839816 1.5 0.227 1.172 0.6C0.658001 1.178 0.244001 1.832 0 2.5C-0.325 3.53 1.642 10.311 8.517 17.188C15.392 24.064 22.172 26.027 23.2 25.7C23.868 25.456 24.522 25.042 25.1 24.528C25.473 24.2 25.691 23.722 25.699 23.205C25.708 22.683 25.502 22.174 25.098 21.84L20.487 17.14Z" fill="white"/>
+                </svg>
+            </button>
+            
+            <div id="status" class="status" aria-live="polite">Ready</div>
+            <div id="timer" class="timer">00:00</div>
+            
+            <div class="transcript-container">
+                <div id="transcript" class="transcript"></div>
+            </div>
+            
+            <input type="text" id="fallback-input" class="fallback-input" placeholder="Type your message here..." />
+        </div>
+    </div>
+
+    <script>
+        // Global state variables
+        let GROQ_API_KEY = '';
+        const GROQ_API_BASE = 'https://api.groq.com/openai/v1/chat/completions'; // Replace with actual endpoint
+        const GROQ_MODEL = 'llama3-8b-8192'; // Replace with actual model
+        
+        let appState = 'IDLE'; // IDLE, RINGING, CONNECTED, DECLINED, BUSY, ENDED
+        let callStartTime = 0;
+        let timerInterval = null;
+        let recognition = null;
+        let googleHindiVoice = null;
+        let femaleHindiVoice = null;
+        let audioContext = null;
+        let currentOscillator = null;
+        let ringInterval = null;
+        let messages = [];
+        let isListening = false;
+        
+        // DOM Elements
+        const modalEl = document.getElementById('modal');
+        const apiKeyInput = document.getElementById('api-key');
+        const startBtn = document.getElementById('start-btn');
+        const appEl = document.getElementById('app');
+        const callBtn = document.getElementById('call-btn');
+        const statusEl = document.getElementById('status');
+        const timerEl = document.getElementById('timer');
+        const transcriptEl = document.getElementById('transcript');
+        const fallbackInput = document.getElementById('fallback-input');
+        const avatarEl = document.getElementById('avatar');
+
+        // Initialize the application
+        function init() {
+            // Setup modal event listeners
+            apiKeyInput.addEventListener('input', () => {
+                startBtn.disabled = apiKeyInput.value.trim() === '';
+            });
+            
+            apiKeyInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !startBtn.disabled) {
+                    startSetup();
+                }
+            });
+            
+            startBtn.addEventListener('click', startSetup);
+            
+            // Setup call button
+            callBtn.addEventListener('click', handleCallButton);
+            callBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleCallButton();
+                }
+            });
+            
+            // Setup fallback input
+            fallbackInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const text = fallbackInput.value.trim();
+                    if (text) {
+                        handleUserMessage(text);
+                        fallbackInput.value = '';
+                    }
+                }
+            });
+            
+            // Initialize voices
+            initVoices();
+            
+            // Check if Speech Recognition is available
+            if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+                showFallbackInput();
+            }
+            
+            // Initialize Web Audio API
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.warn('Web Audio API is not supported in this browser');
+            }
+        }
+
+        // Initialize voice selection
+        function initVoices() {
+            // Load available voices
+            const loadVoices = () => {
+                const voices = speechSynthesis.getVoices();
+                
+                // Try to find Google Hindi voice for Koby
+                googleHindiVoice = voices.find(v => 
+                    v.name.includes('Google') && 
+                    (v.name.includes('Hindi') || v.name.includes('हिन्दी'))
+                );
+                
+                // Find a female Hindi voice for busy message (different from Koby's voice)
+                femaleHindiVoice = voices.find(v => 
+                    v !== googleHindiVoice && 
+                    (v.lang.includes('hi') || v.name.includes('Female') || v.name.includes('Woman'))
+                );
+                
+                // If no Google Hindi found, use first available voice for Koby
+                if (!googleHindiVoice && voices.length > 0) {
+                    googleHindiVoice = voices[0];
+                }
+                
+                // If no female Hindi voice found, use any other voice
+                if (!femaleHindiVoice && voices.length > 0) {
+                    femaleHindiVoice = voices.find(v => v !== googleHindiVoice) || googleHindiVoice;
+                }
+            };
+            
+            // Load voices immediately if available
+            if (speechSynthesis.getVoices().length > 0) {
+                loadVoices();
+            }
+            
+            // Listen for when voices are loaded
+            speechSynthesis.addEventListener('voiceschanged', loadVoices);
+        }
+
+        // Start the setup process
+        function startSetup() {
+            const apiKey = apiKeyInput.value.trim();
+            if (apiKey) {
+                GROQ_API_KEY = apiKey;
+                modalEl.style.display = 'none';
+                appEl.style.display = 'block';
+                
+                // TODO: Replace with actual avatar image
+                // avatarEl.style.backgroundImage = 'url("koby-avatar.jpg")';
+                // avatarEl.textContent = '';
+            }
+        }
+
+        // Handle call button click
+        function handleCallButton() {
+            if (appState === 'IDLE') {
+                startCall();
+            } else if (appState === 'CONNECTED') {
+                endCall();
+            }
+        }
+
+        // Choose a random case with weighted probability
+        function chooseCaseWeighted() {
+            const rand = Math.random();
+            if (rand < 0.7) return 1; // 70% chance
+            if (rand < 0.9) return 2; // 20% chance
+            return 3; // 10% chance
+        }
+
+        // Start the call process
+        function startCall() {
+            const caseNumber = chooseCaseWeighted();
+            
+            switch (caseNumber) {
+                case 1: // Call Connects (70%)
+                    setState('RINGING');
+                    playRinging(4500); // 4.5 seconds
+                    setTimeout(() => {
+                        setState('CONNECTED');
+                        startTimer();
+                        startListening();
+                        // Start with a greeting from Koby
+                        const greeting = "नमस्ते! Hello, it's great to talk to you. How are you today?";
+                        appendMessage('assistant', greeting);
+                        speakKoby(greeting);
+                    }, 4500);
+                    break;
+                    
+                case 2: // Call Declined (20%)
+                    setState('RINGING');
+                    playRinging(3000); // 3 seconds
+                    setTimeout(() => {
+                        playCutTone();
+                        setState('DECLINED');
+                        setTimeout(() => setState('IDLE'), 2000);
+                    }, 3000);
+                    break;
+                    
+                case 3: // Line Busy (10%)
+                    setState('RINGING');
+                    playRinging(2000); // 2 seconds
+                    setTimeout(() => {
+                        playBusyTone();
+                        setState('BUSY');
+                        
+                        // Announce busy message in a different voice
+                        if (femaleHindiVoice) {
+                            const utterance = new SpeechSynthesisUtterance(
+                                "जिस व्यक्ति को आप कॉल कर रहे हैं वह किसी अन्य कॉल पर व्यस्त है"
+                            );
+                            utterance.voice = femaleHindiVoice;
+                            speechSynthesis.speak(utterance);
+                            
+                            utterance.onend = () => {
+                                playCutTone();
+                                setTimeout(() => setState('IDLE'), 1000);
+                            };
+                        } else {
+                            setTimeout(() => {
+                                playCutTone();
+                                setTimeout(() => setState('IDLE'), 1000);
+                            }, 3000);
+                        }
+                    }, 2000);
+                    break;
+            }
+        }
+
+        // End the call
+        function endCall() {
+            stopListening();
+            speechSynthesis.cancel();
+            playCutTone();
+            stopTimer();
+            setState('ENDED');
+            
+            setTimeout(() => {
+                setState('IDLE');
+            }, 1000);
+        }
+
+        // Set application state
+        function setState(state) {
+            appState = state;
+            
+            switch (state) {
+                case 'IDLE':
+                    statusEl.textContent = 'Ready';
+                    callBtn.innerHTML = `
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20.487 17.14L16.422 13.756C16.0524 13.4503 15.5672 13.3355 15.1023 13.4442C14.6374 13.5528 14.2457 13.8721 14.043 14.312L13.419 15.776C11.7842 15.1892 10.1489 14.0195 8.644 12.516C7.13906 11.0125 5.96852 9.37661 5.38 7.742L6.844 7.118C7.28405 6.91516 7.60351 6.52348 7.71226 6.05859C7.821 5.5937 7.70642 5.1084 7.401 4.738L3.86 0.601998C3.52592 0.197166 3.01635 -0.00810925 2.495 0.000398156C1.978 0.00839816 1.5 0.227 1.172 0.6C0.658001 1.178 0.244001 1.832 0 2.5C-0.325 3.53 1.642 10.311 8.517 17.188C15.392 24.064 22.172 26.027 23.2 25.7C23.868 25.456 24.522 25.042 25.1 24.528C25.473 24.2 25.691 23.722 25.699 23.205C25.708 22.683 25.502 22.174 25.098 21.84L20.487 17.14Z" fill="white"/>
+                        </svg>
+                    `;
+                    callBtn.classList.add('pulse');
+                    callBtn.style.background = 'var(--accent-green)';
+                    callBtn.disabled = false;
+                    timerEl.style.display = 'none';
+                    break;
+                    
+                case 'RINGING':
+                    statusEl.textContent = 'Ringing...';
+                    callBtn.disabled = true;
+                    break;
+                    
+                case 'CONNECTED':
+                    statusEl.textContent = 'Call Connected';
+                    callBtn.innerHTML = `
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 9C10.343 9 9 10.343 9 12C9 13.657 10.343 15 12 15C13.657 15 15 13.657 15 12C15 10.343 13.657 9 12 9ZM21 12C21 7.032 16.968 3 12 3C7.032 3 3 7.032 3 12C3 16.968 7.032 21 12 21C12.552 21 13 20.552 13 20C13 19.448 12.552 19 12 19C8.132 19 5 15.868 5 12C5 8.132 8.132 5 12 5C15.868 5 19 8.132 19 12C19 12.552 19.448 13 20 13C20.552 13 21 12.552 21 12Z" fill="white"/>
+                        </svg>
+                    `;
+                    callBtn.classList.remove('pulse');
+                    callBtn.style.background = 'var(--accent-red)';
+                    callBtn.disabled = false;
+                    timerEl.style.display = 'block';
+                    break;
+                    
+                case 'DECLINED':
+                    statusEl.textContent = 'Call Declined';
+                    callBtn.disabled = true;
+                    break;
+                    
+                case 'BUSY':
+                    statusEl.textContent = 'Line Busy';
+                    callBtn.disabled = true;
+                    break;
+                    
+                case 'ENDED':
+                    statusEl.textContent = 'Call Ended';
+                    callBtn.disabled = true;
+                    break;
+            }
+        }
+
+        // Play ringing tone (common Indian phone ring)
+        function playRinging(durationMs) {
+            if (!audioContext) return;
+            
+            try {
+                if (currentOscillator) {
+                    currentOscillator.stop();
+                }
+                if (ringInterval) {
+                    clearInterval(ringInterval);
+                }
+                
+                // Create Indian-style phone ring pattern
+                const ringPattern = () => {
+                    if (audioContext.state !== 'running') return;
+                    
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.1);
+                    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                    
+                    // Second ring after a pause
+                    setTimeout(() => {
+                        if (audioContext.state !== 'running') return;
+                        
+                        const oscillator2 = audioContext.createOscillator();
+                        const gainNode2 = audioContext.createGain();
+                        
+                        oscillator2.type = 'sine';
+                        oscillator2.frequency.setValueAtTime(800, audioContext.currentTime);
+                        
+                        gainNode2.gain.setValueAtTime(0, audioContext.currentTime);
+                        gainNode2.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.1);
+                        gainNode2.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+                        
+                        oscillator2.connect(gainNode2);
+                        gainNode2.connect(audioContext.destination);
+                        
+                        oscillator2.start();
+                        oscillator2.stop(audioContext.currentTime + 0.5);
+                    }, 600);
+                };
+                
+                // Play the ring pattern immediately
+                ringPattern();
+                
+                // Set up interval to repeat the pattern (every 4 seconds for Indian phone ring)
+                ringInterval = setInterval(ringPattern, 4000);
+                
+                // Stop after duration
+                setTimeout(() => {
+                    clearInterval(ringInterval);
+                    ringInterval = null;
+                }, durationMs);
+                
+            } catch (e) {
+                console.warn('Error playing ringing tone:', e);
+            }
+        }
+
+        // Play busy tone
+        function playBusyTone() {
+            if (!audioContext) return;
+            
+            try {
+                if (currentOscillator) {
+                    currentOscillator.stop();
+                }
+                if (ringInterval) {
+                    clearInterval(ringInterval);
+                }
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 480;
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                
+                // Busy pattern: 0.5s on, 0.5s off
+                let time = audioContext.currentTime;
+                for (let i = 0; i < 4; i++) {
+                    gainNode.gain.setValueAtTime(0.3, time);
+                    gainNode.gain.setValueAtTime(0, time + 0.5);
+                    time += 1.0;
+                }
+                
+                currentOscillator = oscillator;
+                
+                setTimeout(() => {
+                    if (oscillator) {
+                        oscillator.stop();
+                    }
+                }, 4000);
+                
+            } catch (e) {
+                console.warn('Error playing busy tone:', e);
+            }
+        }
+
+        // Play call cut tone
+        function playCutTone() {
+            if (!audioContext) return;
+            
+            try {
+                if (currentOscillator) {
+                    currentOscillator.stop();
+                }
+                if (ringInterval) {
+                    clearInterval(ringInterval);
+                    ringInterval = null;
+                }
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime + 0.2);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                currentOscillator = oscillator;
+                
+                setTimeout(() => {
+                    if (oscillator) {
+                        oscillator.stop();
+                    }
+                }, 200);
+                
+            } catch (e) {
+                console.warn('Error playing cut tone:', e);
+            }
+        }
+
+        // Start the timer
+        function startTimer() {
+            callStartTime = Date.now();
+            stopTimer();
+            
+            timerInterval = requestAnimationFrame(updateTimer);
+        }
+
+        // Update the timer display
+        function updateTimer() {
+            if (appState !== 'CONNECTED') return;
+            
+            const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+            timerEl.textContent = formatTime(elapsed);
+            
+            timerInterval = requestAnimationFrame(updateTimer);
+        }
+
+        // Stop the timer
+        function stopTimer() {
+            if (timerInterval) {
+                cancelAnimationFrame(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        // Format time as mm:ss
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Connect to Groq API
+        async function connectGroq(userMessage = '') {
+            if (!GROQ_API_KEY) {
+                appendMessage('system', 'Error: API key not configured');
+                return;
+            }
+            
+            try {
+                // System prompt to define Koby's persona
+                const systemPrompt = `You are Koby, a friendly AI caller. Keep your responses concise and phone-style. 
+                Ask short follow-up questions, handle interruptions gracefully, and avoid long monologues. 
+                Speak in a mix of English and Hindi (Hinglish) when appropriate.`;
+                
+                // Add user message to conversation history if provided
+                if (userMessage) {
+                    messages.push({ role: 'user', content: userMessage });
+                }
+                
+                // Prepare messages with system prompt
+                const apiMessages = [
+                    { role: 'system', content: systemPrompt },
+                    ...messages.slice(-6) // Keep last 3 exchanges for context
+                ];
+                
+                // TODO: Replace with actual API endpoint and parameters
+                const response = await fetch(GROQ_API_BASE, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${GROQ_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: GROQ_MODEL,
+                        messages: apiMessages,
+                        stream: false, // Changed to false for simplicity
+                        max_tokens: 150
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const assistantMessage = data.choices[0]?.message?.content || 'Sorry, I did not understand that.';
+                
+                // Add to conversation history
+                messages.push({ role: 'assistant', content: assistantMessage });
+                
+                // Display and speak the response
+                appendMessage('assistant', assistantMessage);
+                speakKoby(assistantMessage);
+                
+            } catch (error) {
+                console.error('Groq API error:', error);
+                const errorMsg = 'Sorry, I encountered an error. Please try again.';
+                appendMessage('assistant', errorMsg);
+                speakKoby(errorMsg);
+            }
+        }
+
+        // Speak text using Koby's voice
+        function speakKoby(text) {
+            if (!googleHindiVoice) {
+                console.warn('Google Hindi voice not available');
+                return;
+            }
+            
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.voice = googleHindiVoice;
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            
+            utterance.onend = () => {
+                // Restart listening after speaking only if still connected
+                if (appState === 'CONNECTED' && !isListening) {
+                    startListening();
+                }
+            };
+            
+            speechSynthesis.speak(utterance);
+        }
+
+        // Start speech recognition
+        function startListening() {
+            if (isListening) return;
+            
+            if (recognition) {
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    // Ignore errors when stopping
+                }
+            }
+            
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+            } else if ('SpeechRecognition' in window) {
+                recognition = new SpeechRecognition();
+            } else {
+                // Speech recognition not supported
+                showFallbackInput();
+                return;
+            }
+            
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                if (event.results[0].isFinal) {
+                    isListening = false;
+                    handleUserMessage(transcript);
+                }
+            };
+            
+            recognition.onend = () => {
+                isListening = false;
+                // Only restart listening if we're still connected and not speaking
+                if (appState === 'CONNECTED' && !speechSynthesis.speaking) {
+                    setTimeout(() => startListening(), 500);
+                }
+            };
+            
+            recognition.onerror = (event) => {
+                isListening = false;
+                console.error('Speech recognition error:', event.error);
+                if (event.error === 'not-allowed') {
+                    showFallbackInput();
+                }
+                
+                // Restart listening after error if still connected
+                if (appState === 'CONNECTED' && !speechSynthesis.speaking) {
+                    setTimeout(() => startListening(), 1000);
+                }
+            };
+            
+            try {
+                isListening = true;
+                recognition.start();
+            } catch (e) {
+                isListening = false;
+                console.warn('Speech recognition start failed:', e);
+                showFallbackInput();
+            }
+        }
+
+        // Stop speech recognition
+        function stopListening() {
+            isListening = false;
+            if (recognition) {
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    // Ignore errors when stopping
+                }
+                recognition = null;
+            }
+            hideFallbackInput();
+        }
+
+        // Handle user message (from speech or text input)
+        function handleUserMessage(message) {
+            if (!message.trim()) return;
+            
+            // If assistant was speaking, interrupt
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+            }
+            
+            appendMessage('user', message);
+            
+            // Get response from Groq
+            connectGroq(message);
+        }
+
+        // Append message to transcript
+        function appendMessage(role, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.textContent = text;
+            transcriptEl.appendChild(messageDiv);
+            transcriptEl.scrollTop = transcriptEl.scrollHeight;
+        }
+
+        // Show fallback text input
+        function showFallbackInput() {
+            fallbackInput.style.display = 'block';
+        }
+
+        // Hide fallback text input
+        function hideFallbackInput() {
+            fallbackInput.style.display = 'none';
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
