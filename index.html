@@ -79,16 +79,19 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            object-fit: cover;
+            overflow: hidden;
             background: linear-gradient(135deg, #3a3a40, #25252a);
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 60px;
-            font-weight: bold;
-            color: rgba(255, 255, 255, 0.8);
             box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1),
                         inset 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .call-button {
@@ -334,31 +337,9 @@
             
             <div class="avatar-container">
                 <div class="avatar">
-                    <img src="https://videos.openai.com/vg-assets/assets%2Fclient_upload%2Fmedia%2F9ba80388769dc72355ab06c777a221e4eb7dcf3b%2Fmedia_01k20bndfqepe9vnk7cpq3p2wb.png?st=2025-08-28T13%3A43%3A34Z&se=2025-09-03T14%3A43%3A34Z&sks=b&skt=2025-08-28T13%3A43%3A34Z&ske=2025-09-03T14%3A43%3A34Z&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skoid=5e5fc900-07cf-43e7-ab5b-314c0d877bb0&skv=2019-02-02&sv=2018-11-09&sr=b&sp=r&spr=https%2Chttp&sig=v6jGANS%2BZoDdkoqSxpXofAanvEIWKjbuHmUnAabfqJE%3D&az=oaivgprodscus" alt="KobyAI Logo">
+                    <img src="https://videos.openai.com/vg-assets/assets%2Ftask_01k3zefa5de44rxwqs6g05eyyz%2F1756623348_img_1.webp?st=2025-08-31T08%3A11%3A16Z&se=2025-09-06T09%3A11%3A16Z&sks=b&skt=2025-08-31T08%3A11%3A16Z&ske=2025-09-06T09%3A11%3A16Z&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skoid=fea36edb-a052-425e-a84a-436fdce0a7b4&skv=2019-02-02&sv=2018-11-09&sr=b&sp=r&spr=https%2Chttp&sig=J301k%2FVHaK9666ben8yFWo1ljL9r6yS4l1fC80oSDvk%3D&az=oaivgprodscus" alt="KobyAI Logo">
                 </div>
-    </div>
-
-    <style>
-    .avatar-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    }
-
-    .avatar {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;  /* makes it circular */
-    overflow: hidden;    /* hides image outside the circle */
-    }
-
-    .avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;   /* ensures the image fills the circle properly */
-    }
-    </style>
-
+            </div>
             
             <button id="call-btn" class="call-button pulse" aria-label="Call Koby">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -380,8 +361,8 @@
     <script>
         // Global state variables
         let GROQ_API_KEY = '';
-        const GROQ_API_BASE = 'https://api.groq.com/openai/v1/chat/completions'; // Replace with actual endpoint
-        const GROQ_MODEL = 'llama3-8b-8192'; // Replace with actual model
+        const GROQ_API_BASE = 'https://api.groq.com/openai/v1/chat/completions';
+        const GROQ_MODEL = 'llama3-8b-8192';
         
         let appState = 'IDLE'; // IDLE, RINGING, CONNECTED, DECLINED, BUSY, ENDED
         let callStartTime = 0;
@@ -394,6 +375,7 @@
         let ringInterval = null;
         let messages = [];
         let isListening = false;
+        let isSpeaking = false;
         
         // DOM Elements
         const modalEl = document.getElementById('modal');
@@ -405,7 +387,6 @@
         const timerEl = document.getElementById('timer');
         const transcriptEl = document.getElementById('transcript');
         const fallbackInput = document.getElementById('fallback-input');
-        const avatarEl = document.getElementById('avatar');
 
         // Initialize the application
         function init() {
@@ -467,14 +448,19 @@
                 // Try to find Google Hindi voice for Koby
                 googleHindiVoice = voices.find(v => 
                     v.name.includes('Google') && 
-                    (v.name.includes('Hindi') || v.name.includes('हिन्दी'))
+                    (v.name.includes('Hindi') || v.name.includes('हिन्दी') || v.lang.includes('hi-IN'))
                 );
                 
                 // Find a female Hindi voice for busy message (different from Koby's voice)
                 femaleHindiVoice = voices.find(v => 
                     v !== googleHindiVoice && 
-                    (v.lang.includes('hi') || v.name.includes('Female') || v.name.includes('Woman'))
+                    (v.lang.includes('hi') || v.name.includes('Female') || v.name.includes('Woman') || v.name.includes('Madhura'))
                 );
+                
+                // If no Google Hindi found, use first available Hindi voice
+                if (!googleHindiVoice) {
+                    googleHindiVoice = voices.find(v => v.lang.includes('hi') || v.name.includes('Hindi'));
+                }
                 
                 // If no Google Hindi found, use first available voice for Koby
                 if (!googleHindiVoice && voices.length > 0) {
@@ -485,6 +471,9 @@
                 if (!femaleHindiVoice && voices.length > 0) {
                     femaleHindiVoice = voices.find(v => v !== googleHindiVoice) || googleHindiVoice;
                 }
+                
+                console.log('Koby voice:', googleHindiVoice?.name || 'Not found');
+                console.log('Female voice:', femaleHindiVoice?.name || 'Not found');
             };
             
             // Load voices immediately if available
@@ -503,10 +492,6 @@
                 GROQ_API_KEY = apiKey;
                 modalEl.style.display = 'none';
                 appEl.style.display = 'block';
-                
-                // TODO: Replace with actual avatar image
-                // avatarEl.style.backgroundImage = 'url("koby-avatar.jpg")';
-                // avatarEl.textContent = '';
             }
         }
 
@@ -569,12 +554,11 @@
                                 "जिस व्यक्ति को आप कॉल कर रहे हैं वह किसी अन्य कॉल पर व्यस्त है"
                             );
                             utterance.voice = femaleHindiVoice;
-                            speechSynthesis.speak(utterance);
-                            
                             utterance.onend = () => {
                                 playCutTone();
                                 setTimeout(() => setState('IDLE'), 1000);
                             };
+                            speechSynthesis.speak(utterance);
                         } else {
                             setTimeout(() => {
                                 playCutTone();
@@ -590,6 +574,7 @@
         function endCall() {
             stopListening();
             speechSynthesis.cancel();
+            isSpeaking = false;
             playCutTone();
             stopTimer();
             setState('ENDED');
@@ -866,7 +851,6 @@
                     ...messages.slice(-6) // Keep last 3 exchanges for context
                 ];
                 
-                // TODO: Replace with actual API endpoint and parameters
                 const response = await fetch(GROQ_API_BASE, {
                     method: 'POST',
                     headers: {
@@ -876,7 +860,7 @@
                     body: JSON.stringify({
                         model: GROQ_MODEL,
                         messages: apiMessages,
-                        stream: false, // Changed to false for simplicity
+                        stream: false,
                         max_tokens: 150
                     })
                 });
@@ -907,20 +891,35 @@
         function speakKoby(text) {
             if (!googleHindiVoice) {
                 console.warn('Google Hindi voice not available');
-                return;
+                // Try to reinitialize voices
+                initVoices();
+                if (!googleHindiVoice) {
+                    appendMessage('system', 'Voice not available. Please check browser support.');
+                    return;
+                }
             }
             
             speechSynthesis.cancel();
+            isSpeaking = true;
             
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.voice = googleHindiVoice;
-            utterance.rate = 1.0;
+            utterance.rate = 0.9; // Slightly slower for better clarity
             utterance.pitch = 1.0;
+            utterance.lang = 'hi-IN'; // Set language to Hindi India
             
             utterance.onend = () => {
+                isSpeaking = false;
                 // Restart listening after speaking only if still connected
                 if (appState === 'CONNECTED' && !isListening) {
-                    startListening();
+                    setTimeout(() => startListening(), 500);
+                }
+            };
+            
+            utterance.onerror = () => {
+                isSpeaking = false;
+                if (appState === 'CONNECTED' && !isListening) {
+                    setTimeout(() => startListening(), 500);
                 }
             };
             
@@ -929,7 +928,7 @@
 
         // Start speech recognition
         function startListening() {
-            if (isListening) return;
+            if (isListening || isSpeaking) return;
             
             if (recognition) {
                 try {
@@ -939,23 +938,22 @@
                 }
             }
             
-            if ('webkitSpeechRecognition' in window) {
-                recognition = new webkitSpeechRecognition();
-            } else if ('SpeechRecognition' in window) {
-                recognition = new SpeechRecognition();
-            } else {
-                // Speech recognition not supported
+            // Check if speech recognition is available
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
                 showFallbackInput();
                 return;
             }
             
+            recognition = new SpeechRecognition();
             recognition.continuous = false;
             recognition.interimResults = true;
-            recognition.lang = 'en-US';
+            recognition.lang = 'en-US'; // Primary language English
             
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript;
-                if (event.results[0].isFinal) {
+                // Only process if confidence is reasonable and not empty
+                if (event.results[0].isFinal && transcript.trim().length > 0) {
                     isListening = false;
                     handleUserMessage(transcript);
                 }
@@ -964,7 +962,7 @@
             recognition.onend = () => {
                 isListening = false;
                 // Only restart listening if we're still connected and not speaking
-                if (appState === 'CONNECTED' && !speechSynthesis.speaking) {
+                if (appState === 'CONNECTED' && !isSpeaking) {
                     setTimeout(() => startListening(), 500);
                 }
             };
@@ -977,7 +975,7 @@
                 }
                 
                 // Restart listening after error if still connected
-                if (appState === 'CONNECTED' && !speechSynthesis.speaking) {
+                if (appState === 'CONNECTED' && !isSpeaking) {
                     setTimeout(() => startListening(), 1000);
                 }
             };
@@ -1013,6 +1011,7 @@
             // If assistant was speaking, interrupt
             if (speechSynthesis.speaking) {
                 speechSynthesis.cancel();
+                isSpeaking = false;
             }
             
             appendMessage('user', message);
