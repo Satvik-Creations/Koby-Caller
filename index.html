@@ -375,7 +375,7 @@
         let ringInterval = null;
         let messages = [];
         let isListening = false;
-        let isSpeaking = false;
+        let isAssistantSpeaking = false;
         
         // DOM Elements
         const modalEl = document.getElementById('modal');
@@ -574,7 +574,7 @@
         function endCall() {
             stopListening();
             speechSynthesis.cancel();
-            isSpeaking = false;
+            isAssistantSpeaking = false;
             playCutTone();
             stopTimer();
             setState('ENDED');
@@ -900,7 +900,7 @@
             }
             
             speechSynthesis.cancel();
-            isSpeaking = true;
+            isAssistantSpeaking = true;
             
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.voice = googleHindiVoice;
@@ -909,7 +909,7 @@
             utterance.lang = 'hi-IN'; // Set language to Hindi India
             
             utterance.onend = () => {
-                isSpeaking = false;
+                isAssistantSpeaking = false;
                 // Restart listening after speaking only if still connected
                 if (appState === 'CONNECTED' && !isListening) {
                     setTimeout(() => startListening(), 500);
@@ -917,7 +917,7 @@
             };
             
             utterance.onerror = () => {
-                isSpeaking = false;
+                isAssistantSpeaking = false;
                 if (appState === 'CONNECTED' && !isListening) {
                     setTimeout(() => startListening(), 500);
                 }
@@ -928,7 +928,8 @@
 
         // Start speech recognition
         function startListening() {
-            if (isListening || isSpeaking) return;
+            // Don't start listening if assistant is speaking
+            if (isListening || isAssistantSpeaking) return;
             
             if (recognition) {
                 try {
@@ -961,8 +962,8 @@
             
             recognition.onend = () => {
                 isListening = false;
-                // Only restart listening if we're still connected and not speaking
-                if (appState === 'CONNECTED' && !isSpeaking) {
+                // Only restart listening if we're still connected and assistant is not speaking
+                if (appState === 'CONNECTED' && !isAssistantSpeaking) {
                     setTimeout(() => startListening(), 500);
                 }
             };
@@ -974,8 +975,8 @@
                     showFallbackInput();
                 }
                 
-                // Restart listening after error if still connected
-                if (appState === 'CONNECTED' && !isSpeaking) {
+                // Restart listening after error if still connected and assistant is not speaking
+                if (appState === 'CONNECTED' && !isAssistantSpeaking) {
                     setTimeout(() => startListening(), 1000);
                 }
             };
@@ -1011,7 +1012,7 @@
             // If assistant was speaking, interrupt
             if (speechSynthesis.speaking) {
                 speechSynthesis.cancel();
-                isSpeaking = false;
+                isAssistantSpeaking = false;
             }
             
             appendMessage('user', message);
