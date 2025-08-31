@@ -333,8 +333,32 @@
             <h1 class="title">Call Koby</h1>
             
             <div class="avatar-container">
-                <div class="avatar" id="avatar">K</div>
-            </div>
+                <div class="avatar">
+                    <img src="https://videos.openai.com/vg-assets/assets%2Fclient_upload%2Fmedia%2F9ba80388769dc72355ab06c777a221e4eb7dcf3b%2Fmedia_01k20bndfqepe9vnk7cpq3p2wb.png?st=2025-08-28T13%3A43%3A34Z&se=2025-09-03T14%3A43%3A34Z&sks=b&skt=2025-08-28T13%3A43%3A34Z&ske=2025-09-03T14%3A43%3A34Z&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skoid=5e5fc900-07cf-43e7-ab5b-314c0d877bb0&skv=2019-02-02&sv=2018-11-09&sr=b&sp=r&spr=https%2Chttp&sig=v6jGANS%2BZoDdkoqSxpXofAanvEIWKjbuHmUnAabfqJE%3D&az=oaivgprodscus" alt="KobyAI Logo">
+                </div>
+    </div>
+
+    <style>
+    .avatar-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    }
+
+    .avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;  /* makes it circular */
+    overflow: hidden;    /* hides image outside the circle */
+    }
+
+    .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;   /* ensures the image fills the circle properly */
+    }
+    </style>
+
             
             <button id="call-btn" class="call-button pulse" aria-label="Call Koby">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
