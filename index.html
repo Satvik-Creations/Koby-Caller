@@ -914,7 +914,7 @@
                 // Restart listening after speaking only if still connected
                 if (appState === 'CONNECTED' && !isListening) {
                     // Add longer delay for first message to prevent self-response
-                    const delay = isFirstMessage ? 2000 : 500;
+                    const delay = isFirstMessage ? 1500 : 500;
                     setTimeout(() => startListening(), delay);
                 }
             };
@@ -1050,4 +1050,5 @@
     </script>
 </body>
 </html>
+
 
