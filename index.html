@@ -519,7 +519,7 @@
             switch (caseNumber) {
                 case 1: // Call Connects (70%)
                     setState('RINGING');
-                    playRinging(4500); // 4.5 seconds
+                    playRinging(5000); // 5 seconds
                     setTimeout(() => {
                         setState('CONNECTED');
                         startTimer();
@@ -1050,6 +1050,3 @@
     </script>
 </body>
 </html>
-
-
-
