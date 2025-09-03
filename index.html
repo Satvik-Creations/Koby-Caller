@@ -550,7 +550,7 @@
                         // Announce busy message in a different voice
                         if (femaleHindiVoice) {
                             const utterance = new SpeechSynthesisUtterance(
-                                "जिस व्यक्ति को आप कॉल कर रहे हैं वह किसी अन्य कॉल पर व्यस्त है"
+                                "जिस व्यक्ति को आप कॉल कर रहे हैं वह किसी अन्य कॉल पर व्यस्त है, कृपया कुछ समय बाद प्रयास करें"
                             );
                             utterance.voice = femaleHindiVoice;
                             utterance.onend = () => {
@@ -1050,3 +1050,4 @@
     </script>
 </body>
 </html>
+
